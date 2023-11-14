@@ -27,7 +27,6 @@ def get_info_user(user_id):
     vk = VK_Client(token_access, user_id)  # создаем экземпляр класса VK
     cl_info = vk.users_info()  # получаем информацию о пользователе, который общается с ботом
     # print(cl_info)
-
     city = cl_info['response'][0].setdefault('city', {'id': None, 'title': ''})  # устанавливаем значения по умолчанию town заменил на sity (путаюсь) -->
     cl_info['response'][0].setdefault('bdate', '')  # --> на случай отсутствия данных
 
@@ -50,8 +49,13 @@ def get_info_user(user_id):
         'user_id': user_id}  # --> обработки его в боте и если данные валидны -->
     return result  # --> вызываем get_cand_list с параметрами result
 
+def get_info_friend(user_id):
+    vk = VK_Client(token_access, user_id)
+    res = vk.get_friends()
+    fr_list = res['response']['items']
+    return fr_list
 
-def get_cand_list(data):
+def get_cand_list(data, fr_list):
     """Получает информацию о кандидатах и заполняет базу данных."""
     session = get_connection()
     #access_token = open('access_token').read()  # тот же access_token, что и в get_info_user
@@ -60,6 +64,8 @@ def get_cand_list(data):
     # print(data_for[0])
     # if data_for[0]['relation'] in [1,6,0]:
     #     print('Отлично')
+    today = datetime.date.today()
+    year = today.year
     for el in data_for:
         el.setdefault('city', {'id': None, 'title': ''})
         el.setdefault('bdate', '')
@@ -75,13 +81,13 @@ def get_cand_list(data):
             continue
         # pprint(dict)
         dict2 = {}
-        if el['is_closed'] == False:  # проверяем приватность страници, если False, то страница публичная и можно получить доступ к информации
-            if el['city']['id'] == data['city'] and el['relation'] in [1, 6, 0] and el['bdate'] != '':# --> по-этому сравниваем город пользователя с городом кандидата
+        if el['is_closed'] == False and el['id'] not in fr_list:  # проверяем приватность страницы, если False, то страница публичная и можно получить доступ к информации
+            if el['city']['id'] == data['city'] and el['relation'] in [1, 6, 0] and el['bdate'] != '':# --> поэтому сравниваем город пользователя с городом кандидата
                 #pprint(el)
                 cand = Candidates(name=el['first_name'],
                                   fam_name=el['last_name'],
                                   city=el['city']['title'],
-                                  age=(2023 - int(el['bdate'].split('.')[2])),
+                                  age=(year - int(el['bdate'].split('.')[2])),
                                   gender=el['sex'],
                                   vk_id=el['id'],
                                   vk_url=f"https://vk.com/id{el['id']}",
@@ -94,7 +100,7 @@ def get_cand_list(data):
                 # получаем три фотографии с наибольшим количеством лайков
                 for photo in sp_photos[:3]:
                     photo1 = Photos(candidate_id=el['id'], photo_url=photo[1])
-                    session.add(photo1)   # записываем данные о фото в базу
+                    session.add(photo1)  # записываем данные о фото в базу
     list_cand_vk_id = session.query(Candidates.vk_id).all()  # id всех найденых кандидатов
     session.commit()  # записываем данные в базу данных
     session.close()  # закрываем сессию

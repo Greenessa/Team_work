@@ -1,4 +1,9 @@
+from pprint import pprint
+
 import requests
+
+from tokens import token_access
+
 
 class VK_Client:
     API_BASE_URL = 'https://api.vk.com/method'
@@ -9,6 +14,12 @@ class VK_Client:
 
     def get_params(self):
         return {'access_token': self.token, 'v': '5.131'}
+
+    def get_friends(self):
+        params = self.get_params()
+        params.update({'user_id': self.user_id})
+        resp = requests.get(f'{self.API_BASE_URL}/friends.get', params=params).json()
+        return resp
 
     def get_photos(self):
         params = self.get_params()
@@ -37,3 +48,10 @@ class VK_Client:
         resp = requests.get(f'{self.API_BASE_URL}/messages.allowMessagesFromGroup', params=params)
         return resp.json()
 
+# vk_klient = VK_Client(token_access, 180411688)
+# res = vk_klient.get_friends()
+# pprint(res['response']['items'])
+# if 845050 not in res['response']['items']:
+#     print("not")
+# else:
+#     print("yes")

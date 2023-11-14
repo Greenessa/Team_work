@@ -5,7 +5,7 @@ import requests
 import json
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.longpoll import VkLongPoll, VkEventType
-from db_search import get_info_user, get_cand_list, get_info, add_to_favorites, add_to_file, dell_table
+from db_search import get_info_user, get_cand_list, get_info, add_to_favorites, add_to_file, dell_table, get_info_friend
 from models import create_tables
 from tokens import token_bot, dsn, token_access, group_id
 from vk_cl import VK_Client
@@ -29,12 +29,17 @@ def send_message(user_id, message, keyboard=None):
         args['keyboard'] = keyboard.get_empty_keyboard()
     vk_session.method("messages.send", args)
 
-
+# def send_photo(user_id, photo_id):
+#     """Отправляет фотографии в чат пользователя."""
+#     #for photo in range(0, len(photo_id)):
+#     vk_session.method("messages.send",
+#                           {"user_id": user_id, "attachment": f'{photo_id[0][0]},{photo_id[1][0]},{photo_id[2][0]}',
+#                            "random_id": randrange(10 ** 7)})
 def send_photo(user_id, photo_id):
     """Отправляет фотографии в чат пользователя."""
-    for photo in range(0, len(photo_id)):
+    for photo in photo_id[:3]:
         vk_session.method("messages.send",
-                          {"user_id": user_id, "attachment": photo_id[photo][0],
+                          {"user_id": user_id, "attachment": photo[0],
                            "random_id": randrange(10 ** 7)})
 
 
@@ -82,11 +87,12 @@ while True:
                         first_user_id = user_id
                         send_message(user_id, 'Выполняю запрос. Пожалуйста, подождите')
                         get_info_date = get_info_user(user_id)
+                        fr_list = get_info_friend(user_id)
                         if get_info_date['city'] is None:
                             send_message(user_id,
                                          "Мы не можем подобрать кандидата, в Вашем профиле отсутствует город")
                         else:
-                            list_vk_id = get_cand_list(get_info_date)
+                            list_vk_id = get_cand_list(get_info_date, fr_list)
                             keyboard = VkKeyboard()
                             keyboard.add_button("Вперед", color=VkKeyboardColor.POSITIVE)
                             send_message(user_id, 'Для просмотра нажмите кнопку "Вперед"', keyboard)
