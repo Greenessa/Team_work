@@ -92,21 +92,9 @@ def get_cand_list(data):
                     dict2[a] = f'photo{elem["owner_id"]}_{elem["id"]}'  # формируем не обходимый формат для фото
                 sp_photos = sorted(dict2.items(), reverse=True)  # сортируем по убыванию
                 # получаем три фотографии с наибольшим количеством лайков
-                if len(sp_photos) >= 3:
-                    photo = Photos(candidate_id=el['id'], photo_url=sp_photos[0][1])
-                    session.add(photo)
-                    photo = Photos(candidate_id=el['id'], photo_url=sp_photos[1][1])
-                    session.add(photo)
-                    photo = Photos(candidate_id=el['id'], photo_url=sp_photos[2][1])
-                    session.add(photo)
-                elif len(sp_photos) == 2:
-                    photo = Photos(candidate_id=el['id'], photo_url=sp_photos[0][1])
-                    session.add(photo)
-                    photo = Photos(candidate_id=el['id'], photo_url=sp_photos[1][1])
-                    session.add(photo)
-                elif len(sp_photos) == 1:
-                    photo = Photos(candidate_id=el['id'], photo_url=sp_photos[0][1])
-                    session.add(photo)  # записываем данные о фото в базу
+                for photo in sp_photos[:3]:
+                    photo1 = Photos(candidate_id=el['id'], photo_url=photo[1])
+                    session.add(photo1)   # записываем данные о фото в базу
     list_cand_vk_id = session.query(Candidates.vk_id).all()  # id всех найденых кандидатов
     session.commit()  # записываем данные в базу данных
     session.close()  # закрываем сессию
